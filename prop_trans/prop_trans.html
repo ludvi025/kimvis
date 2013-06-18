@@ -1,0 +1,41 @@
+<html>
+<head>
+	<title>OpenKIM Multi-Property Visualization</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script src="./d3.v3.js"></script>
+	<script src="./query.js"></script>
+	<script src="./multiAxes.js"></script>
+	<link rel="stylesheet" type="text/css" href="./style.css">
+	<script>
+		// Construct options object using d3 to access the html form
+	var options = {
+		title : '',
+		y:'', 
+		labels :'', 
+		errorbar: '',
+		yerr:'',
+		xerr: '',
+		xaxis: 'Atoms',
+		yaxis: 'Lattice Constant ( Angstroms )', 
+		xunits: '',
+		yunits: 'A',
+		width: 500, 
+		height: window.innerHeight-80,
+		margin: { top: 20, right: 40, bottom: 80, left: 50},
+	}	
+
+	
+	</script>
+	<div id="container">
+		<h1 style="position: relative; left: 230px;">OpenKIM Multi-Property Visualizer</h1>
+		<div id="kimvis">
+			<div id="loading">
+				Loading data.. <br><br>If loading takes longer than 5 sec, try refreshing.
+			</div>
+		</div>
+		<form >
+		
+	</div> <!--container-->
+
+</body>
+</html>

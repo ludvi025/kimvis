@@ -1,0 +1,122 @@
+body{
+    font: 11px sans-serif;
+    margin: 0;
+}
+
+#visinput{
+	top : 20px;
+	left: 10px;
+}
+
+#visinput, form, fieldset{
+	position: relative;
+	width: 1020px;
+	height: 175px;
+}
+#progressbar_container{
+	display: inline-block;
+	width: 100px;
+	height: 8px;
+	border: thin solid #ccc;
+}
+#progressbar{
+	width: 2%;
+	height: 100%;
+	background: #f00;
+}
+
+#jsmol_container{
+	position: relative;
+	top : 10px;
+	left: 10px;
+}
+
+h4 {
+	font-size: 14px;
+	font-family: Arial;
+	margin: 0.2em;
+}
+.hint{
+/*	position: fixed;
+ 	top: 520px;
+	width: 485px; */
+	background: #ff6;
+	border: solid #fc6 thin;
+	margin-right: 1em;
+	margin-left: 0.5em;
+}
+#container{
+	position: absolute;
+	top: 50px;
+}
+#structure_select{
+	width: 500px;
+}
+
+#optstab td{
+	padding-left: 1.5em;
+}
+#filters{
+	width: 100%;
+}
+#filters div{
+	display: inline;
+	padding-left: 40px;
+	width: 300px;
+}
+
+.filterbox{
+	position: absolute;
+	font-size: 12px;
+	border: 1px solid black;
+	border-top: none;
+	margin: 0;
+	padding : 0.5em;
+	background: #fff;
+	z-index: 200;
+}
+.filterbox select{
+	width: 300px;
+}
+/*.select2-container-multi{
+	max-height: 250px;
+	overflow: scroll;
+}*/
+
+/* black bar */
+a{
+	color: #0088cc;
+	text-decoration: none;
+}
+a:hover{
+	color: #005580;
+	text-decoration: underline;
+}
+#blackbar {
+	background: #1b1b1b;
+	height: 44px;
+}
+#navbar{
+	font-family: sans-serif;
+	font-size: 14px;
+	width: 80%;
+	min-width: 1150px;
+	margin-left: auto;
+	margin-right: auto;
+	height: 44px;
+}
+#navbar img{
+	position: relative;
+	top: 10px;
+	margin-right: 12px;
+}
+#navbar a{
+	position: relative;
+	top: 4px;
+	color: #999;
+	margin-right: 12px;
+}
+#navbar a:hover{
+	color: #fff;
+	text-decoration: none;
+}

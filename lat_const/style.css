@@ -1,0 +1,175 @@
+body {
+    font: 10px sans-serif;
+    margin: 0;
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.legend{
+	shape-rendering: crispEdges;
+	}
+.legend circle{
+	shape-rendering: optimizeSpeed;
+	}
+.point_label{
+	z-index: 0;
+	opacity: 0.5;
+	fill: #000;
+	}
+.dot {
+    stroke: #000;
+	position: relative;
+	z-index: 101;
+}
+.rd{
+	fill: #09f;
+		z-index: 102;
+}
+.tr {
+	fill: #f55;
+		z-index: 102;
+}
+.radial {
+position: relative;
+	fill: #aaa;
+	z-index: -1;
+}
+.radial_area {
+position: relative;
+	z-index: -20;
+	fill: #000;
+	opacity: 0.18;
+}
+#visInput{
+	position: relative;
+	top: -35px;
+	left: 0px;
+	width: 100px;
+}
+#visInput select{
+	width:100px;
+}
+
+.filterbox{
+	position: absolute;
+	font-size: 12px;
+	border: 1px solid black;
+	border-left: none;
+	margin: 0;
+	padding : 0.5em;
+	background: #fff;
+	z-index: 200;
+}
+.filterbox select{
+	width: 400px;
+}
+
+.select_line{
+	shape-rendering: crispEdges;
+	stroke-dasharray: 10,10;
+	stroke-width: 2;
+	stroke: black;
+}
+.dataInfo{
+	position: absolute;
+	left: 15%;
+	top: 15%;
+	background: #fff;
+	opacity: 0.88;
+	z-index: 200;
+	visibility: visible;
+}
+.dataInfoP{
+	font-size: 12px;
+	border: 1px solid black;
+	margin: 0;
+	padding : 1em;
+	max-width: 700px;
+}
+#interaction{
+	width: 70%;
+	margin: auto;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+#kimvis{
+	z-index: 100;
+	float: left;
+	position: absolute;
+	top: 80;
+	left: 140px;
+	width: 80%
+}
+.hint{
+	background: #ff6;
+	border: solid #fc6 thin;
+	padding-right: 1em;
+	padding-left: 0.5em;
+}
+image, .button{
+	cursor: pointer;
+}
+#loading{
+	margin-top: 20px;
+}
+#help_box{
+	width: 600px;
+	visibility: hidden;
+	position: absolute;
+	background: #fff;
+	top: 10%;
+	left: 10%;
+	z-index: 200;
+	padding: 1em;
+	border: thin solid black;
+}
+#help_box p{
+	margin-left: 40px;
+	margin-top: -20px;
+}
+
+.select2-container-multi{
+	max-height: 85px;
+	overflow: scroll;
+}
+
+/* black bar */
+a{
+	color: #0088cc;
+	text-decoration: none;
+}
+a:hover{
+	color: #005580;
+	text-decoration: underline;
+}
+#blackbar {
+	background: #1b1b1b;
+	height: 44px;
+}
+#navbar{
+	font-family: sans-serif;
+	font-size: 14px;
+	width: 80%;
+	min-width: 1150px;
+	margin-left: auto;
+	margin-right: auto;
+	height: 44px;
+}
+#navbar img{
+	position: relative;
+	top: 10px;
+	margin-right: 12px;
+}
+#navbar a{
+	position: relative;
+	top: 4px;
+	color: #999;
+	margin-right: 12px;
+}
+#navbar a:hover{
+	color: #fff;
+	text-decoration: none;
+}

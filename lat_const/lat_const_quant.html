@@ -1,0 +1,262 @@
+<html>
+<head>
+	<title>OpenKIM Lattice Constant Visualization</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script src="./d3.v3.js"></script>
+	<script src="./query.js"></script>
+	<script src="./fakeQuery.js"></script>
+	<script src="./lat_const_quant.js"></script>
+	<script src="./filters.js"></script>
+	<script src="./scatterPlotQuantitative.js"></script>
+	<script src="./jquery-1.9.1.min.js"></script>
+	<script src="./jquery-ui.js"></script>
+	<script src="./select2/select2.js" ></script>
+	<link href="./select2/select2.css" type="text/css" rel="stylesheet"/>
+	<link rel="stylesheet" type="text/css" href="./style.css">
+	<script>
+
+	// Global variables
+	var query_result = []; 
+	var options = {};
+	var filters;
+	var plot;
+	var select_range_down = false;
+	var zoom_box_down = false;
+	var inspect_down = false;
+	var radial_open = false;
+	var panning_down = false;
+	var panning = false;
+
+	// Default set
+	var atoms = ["W", "Al", "Co", "Zn", "Fe", "Nb", "Ni", "Si", "Cr", "Ta", "Pd", "Mg", "Ca", "Mn", "V", "Cu", "Cd", "Mo", "Re", "Ga", "Hg", "Ir", "Ru", "Pt", "Sc", "Ne", "Ba", "Tb", "Ag", "Au", "U", "Na", "In", "Tc", "Gd", "Ho", "Pb", "Li", "Am", "Hf", "Ac", "Os", "Rb", "Sn", "Sr", "C", "Ce", "Eu", "La", "Kr", "Ge", "Th", "Ar", "Se", "K", "Zr", "Dy", "Lu", "Yb", "Cs", "Pa", "Sm", "As", "Tm", "Bi", "Tl", "Ti", "Nd", "Be", "He", "Er", "Rh", "Te", "Y", "Xe"];
+	atoms = d3.set(atoms);
+
+	// Start time for query
+	var t1 = new Date();
+
+	query_result = buildDataStruct(fake_result, keys_tr, ['Model', 'Test']);
+	query_result = query_result.values();
+	for (var i = 0; i<query_result.length; i++){
+		if (i%2){
+			query_result[i].source = 'rd';
+		} else {
+			query_result[i].source = 'tr';
+		}
+	}
+	// Create set of filters
+	filters = new multiFilter(query_result);
+	filters.addFilter('sn', 'Shortname', 'shortsel', true);
+	filters.addFilter('at', 'Atoms', 'atomsel', false);
+	filters.addFilter('sg', 'Spacegroup', 'spacesel', false);
+	filters.getFilter('at').selection = atoms;
+
+	// Plot
+	$(document).ready(submitOptions);
+
+	/*// Get data and structure as an array of objects
+	d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(q_tr, function(error, json_result) {
+		if (error) return console.warn(error);
+		
+		var query_result_tr, query_result_rd;
+		
+		query_result_tr = buildDataStruct(json_result,keys_tr, ['Model', 'Test']);
+		query_result_tr.forEach(function(key,val){
+			this.get(key).source = 'tr';	// Mark as test result for labeling 
+		});
+
+		d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(q_rd, 
+		function(error, json_result) {
+			if (error) return console.warn(error);
+			
+			// Measure time
+			var t2 = new Date();
+			var dt = t2.getTime() - t1.getTime();
+
+			console.log('Query took ' + dt + ' ms');
+			d3.select('#querytime').text('Query took ' + dt + ' ms');
+			
+			d3.select('#loading').remove(); // Finished with query, remove loading div
+
+			query_result_rd = buildDataStruct(json_result,keys_rd,['RD']);
+			query_result_rd.forEach(function(key,value){
+				this.get(key).source = 'rd';
+			});
+			
+			// Combine test result and reference data arrays
+			query_result = query_result_tr.values().concat(query_result_rd.values());
+			
+			// Dirty unit conversion
+			for (var i = 0; i<query_result.length; i++){
+				if (query_result[i]['Unit'] == 'nm'){
+					query_result[i]['a']*=10;
+					query_result[i]['b']*=10;
+					query_result[i]['c']*=10;
+					query_result[i]['Unit'] = 'A'
+				}
+			}
+			
+			// Create set of filters
+			filters = new multiFilter(query_result);
+			filters.addFilter('sn', 'Shortname', 'shortsel', true);
+			filters.addFilter('at', 'Atoms', 'atomsel', false);
+			filters.addFilter('sg', 'Spacegroup', 'spacesel', false);
+			filters.getFilter('at').selection = atoms;
+
+			// Plot
+			submitOptions();
+					
+		});
+	});*/
+	</script>
+</head>
+<body>
+	<div id="blackbar">
+		<div id="navbar">
+			<img src="../images/kim.png">
+			<a href="http://openkim.org" target="_blank">Home</a>
+			<a href="../index.html">Visualization</a>
+		</div>
+	</div>
+	<div id="container">
+		<h1 style="position: relative; left: 230px;">OpenKIM Lattice Constant Visualizer</h1>
+		<div id="kimvis">
+	<!-- 		<div id="loading">
+				Loading data.. <br><br>If loading takes longer than 5 sec, try refreshing.
+			</div> -->
+		</div>
+		<form >
+			<fieldset id="visInput" >
+				<legend>Tools</legend>
+				<div id="interaction">
+					<img id="zoom_box_button" title="Zoom Tool" onclick="zoomBoxDown()" src="./icons/zoom_box_up.png">
+					<img id="zoom_out_button" title="Zoom Out Tool" onclick="zoomOutDown()" src="./icons/zoom_out.png">
+					<img id="panning_button" title="Panning Tool" onclick="panBoxDown()" src="./icons/pan_up.png">
+					<img id="inspect_button" title="Inspect Data Point" onclick="inspectDown()" src="./icons/inspect_up.png">
+
+					<img id="label_button" title="Label Data Points" onclick="toggleMenuOptions('label')" src="./icons/label_up.png">
+					<img id="data_button" title="Data Options" onclick="toggleMenuOptions('data')" src="./icons/data_up.png">
+					<img id="filter_button" title="Filters" onclick="toggleMenuOptions('filter')" src="./icons/filter_up.png">					
+					<img id="help_button" title="Help Tool" onclick="helpDown()" src="./icons/help_up.png">
+				</div><!-- Interaction -->
+				<hr>
+				<div id="label_div">
+					<h3>Labels</h3>
+					Data Labels:<br> <select id="labels" name="labels" size=1>
+						<option value="">None</option>
+						<option value="Test">Test</option>
+						<option value="Model">Model</option>
+						<option value="RD">Reference Data ID</option>
+						<option value="Temperature">Temperature</option>
+						<option value="Atoms">Atoms</option>
+						<option value="Shortname">Short Name</option>
+					</select><script> 	d3.select('#labels').property('value','Shortname'); </script>
+				</div><!-- label_div -->
+				<script>	$('#label_div').animate({height: 'toggle'}); </script>
+				<hr>
+				<div id="data_div">
+					<h3>Data Options</h3>
+					Lattice Constant:<br> <select  id="y" name="y" size=1>
+						<option value="a">a</option>
+						<option value="b">b</option>
+						<option value="c">c</option>
+					</select>
+					<br><br>
+					Units:<br> <select  id="latconst-units" name="latconst-units" size=1>
+						<option value="A">Angstroms</option>
+						<option value="nm">Nanometers</option>
+					</select>
+					<br><br>
+					Temperature Units:<br> <select id="temp-units" name="temp-units" size=1>
+						<option value="K">Kelvin</option>
+						<option value="C">Celsius</option>
+						<option value="F">Fahrenheit</option>
+					</select>
+				<script>	$('#data_div').animate({height: 'toggle'}); </script>
+				</div><!-- data_div -->
+				<hr>
+				<div id="filter_div">
+					<h3>Filters</h3>
+					Ref. Data/ Test: <select id="rd-tr" name="rd-tr" size=1>
+							<option value="b">Both</option>
+							<option value="rd">Reference Data</option>
+							<option value="tr">Test Result</option>
+						</select>
+					<br><br>Range:<br>
+					Min:&nbsp;&nbsp;&nbsp;<input type="text" id="y_min" size=5>
+					<br>
+					Max:&nbsp;&nbsp;<input type="text" id="y_max" size=5>
+					<br><br>
+					<div id="short">
+						Shortname: <br>
+						<input type="button" onclick="filterButtonClick(filters, 'sn')" id="shortsel_button" value="Select"><br>
+						<input type="button" onclick="filters.getFilter('sn').selectAll()" value="Select All">
+						<input type="button" onclick="filters.getFilter('sn').clearSelection()" value="Clear">
+					</div>
+					<br>
+					<div id="atom">
+						Atoms: <br>
+						<input type="button" onclick="filterButtonClick(filters, 'at')" id="atomsel_button" value="Select"><br>
+						<input type="button" onclick="filters.getFilter('at').selectAll()" value="Select All">
+						<input type="button" onclick="filters.getFilter('at').clearSelection()" value="Clear">
+					</div>
+					<br>
+					<div id="space">
+						Spacegroup: <br>
+						<input type="button" onclick="filterButtonClick(filters, 'sg')" id="spacesel_button"value="Select"><br>
+						<input type="button" onclick="filters.getFilter('sg').selectAll()" value="Select All">
+						<input type="button" onclick="filters.getFilter('sg').clearSelection()" value="Clear">
+					</div>
+					<br>
+					<input type="button" onclick="resetFilters()" value="Reset Filters">
+				</div><!-- Filters -->
+				<script>	$('#filter_div').animate({height: 'toggle'}); </script>
+				<hr>
+
+				<input type="button" style="padding: 3;" onclick="submitOptions()" value="Apply">
+				<input type="button" style="padding: 3;" onclick="resetDown()" value="Reset">
+				<hr>
+				<h4>Dev</h4>
+				<p id="querytime">
+				</p>
+			</fieldset>
+		</form>
+
+		<!-- Floating Elements -->
+		<div id="hidden_filter"></div>
+		<div id="help_box">
+			<h3>Help</h3>
+			
+			<img title="Zoom Tool"  src="./icons/zoom_box_up.png"> 
+			<p>Zoom Tool: Select this tool, then click on the graph and drag to zoom in on the data.</p>
+			
+			<img title="Zoom Out Tool"  src="./icons/zoom_out.png">
+			<p> Zoom Out Tool: Zoom out if zoomed in.</p>
+			
+			<img title="Panning Tool"  src="./icons/pan_up.png">
+			<p> Panning Tool: While zoomed in, select this tool and click and drag to pan through the data.</p>
+			
+			<img title="Inspect Data Point"  src="./icons/inspect_up.png">
+			<p>Inspect Tool: Select this tool and click a data point to display a full read out on the data point.</p>
+			
+			<img  title="Label Data Points"  src="./icons/label_up.png">
+			<p> Label Options: Click to open labeling options. Select a label and click update to apply. Hovering over a label will highlight it for easier reading. For large datasets, disable labeling.</p>
+			
+			<img title="Data Options"  src="./icons/data_up.png">
+			<p> Data Options: Click to open data options. Click apply to update the graph. Note: Changing the units resets the zoom.</p>
+			
+			<img  title="Filters"  src="./icons/filter_up.png">
+			<p> Filter Options: Click to open filtering options. Filters are interdependent, ie, they will update valid options based on each other. Click "Reset Filters" to start over.</p>
+			
+			<img  title="Help Tool"  src="./icons/help_up.png">
+			<p>	Help: Display this help box</p>
+			<input style="float: right;" type="button" onclick="helpDown()" value="Close">
+		
+		</div>	
+		<script>
+			// Add dragging to help box
+			$('#help_box').draggable();
+		</script>
+	</div> <!--container-->
+	<div id="queries"></div>
+</body>
+</html>

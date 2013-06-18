@@ -1,0 +1,70 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script src="./d3.v3.js"></script>
+<script src="./jquery-1.9.1.min.js"></script>
+<script src="https://rawgithub.com/mrdoob/three.js/master/build/three.js"></script>
+<script src="./ParallelepipedGeometry.js"></script>
+<script src="./helvetiker_regular.typeface.js"></script>
+<script src="./lat_const_three.js"></script>
+
+<script>
+
+var query = 'querydata=[:find \
+     \
+    ?a ?b ?c  \
+    ?alpha ?beta ?gamma \
+    ?unit \
+    ?species \
+    :where  \
+	\
+	[?e :properties ?property1-ref]  \
+	[?property1-ref :kim-template-tags "equilibrium-crystal-structure"]  \
+	\
+	[?property1-ref :openkim-key.crystal-structure ?p1-cs-ref]  \
+	[?p1-cs-ref :primitive.crystal-structure.a.source-value ?a]  \
+	[?p1-cs-ref :primitive.crystal-structure.b.source-value ?b]  \
+	[?p1-cs-ref :primitive.crystal-structure.c.source-value ?c]  \
+	[?p1-cs-ref :primitive.crystal-structure.alpha.source-value ?alpha]  \
+	[?p1-cs-ref :primitive.crystal-structure.beta.source-value ?beta]  \
+	[?p1-cs-ref :primitive.crystal-structure.gamma.source-value ?gamma]  \
+	[?p1-cs-ref :primitive.crystal-structure.a.source-unit ?unit] \
+	[?p1-cs-ref :primitive.crystal-structure.wyckoff-site ?p1-crystal-wyckoff-ref] \
+	[?p1-crystal-wyckoff-ref :primitive.crystal-structure.wyckoff-site.species ?species]  \
+  ]';
+  
+var keys = [
+	'a', 'b', 'c',
+	'alpha', 'beta', 'gamma', 
+	'units',
+	'atom'
+	];
+
+var uri = "https://datalog-search.openkim.org/api/query";
+
+
+var cells;
+var camera;
+
+d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(query, drawScene);
+
+
+
+</script>
+<style>
+body {
+    font: 10px sans-serif;
+	width: 1024px;
+}
+</style>
+</head>
+<body>
+<div id="#kimvis">
+
+</div>
+</body>
+<script>
+
+
+</script>
+</html>

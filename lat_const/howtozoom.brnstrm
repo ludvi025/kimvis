@@ -1,0 +1,49 @@
+10 June 2013
+============
+
+On zoom, we'll adjust the scale domain, then use that domain to filter the data that's already been passed. This will preserve the filtering that's already been done while providing a mechanism for redrawing the axes and applying another filter to the data on the fly.
+
+On mouse click, set down to true.
+On move, redefine 
+
+We can either redefine our zoom box, so that it only zooms into the picture, without touching the data, and then just modify the zoom box, or we can use an x and y filter on the data, and redraw the graph as we drag.
+
+Need 3 functions:
+__ 1: Redraw the graph based on a new xDomain and yDomain
+__ 2: On mouse down && move, calculate new domains and pass to redraw
+	__ Using original click location, calculate displacement. 
+__ 3: On button down/up, set down to true/false. 
+
+
+Panning
+--------
+The new xDomain will be a slice of the full xDomain, specified by two indices, which change depending on the number of full "bars" over we are.
+
+The new yDomain will be two numbers calculated by increasing/decreasing the current yDomain by an amount determined using the inverse of yScale and the distance the mouse has moved.
+
+Need: 
+> variables to keep track of mouse displacement
+> variables to keep track of indices for 
+
+6 June 2013
+===========
+
+what is the goal in the most abstract sense?
+Zoom into the graph, without zooming into the axes, redraw the axes with proper labels
+
+Things that will be useful to do:
+> Separate the axes from the <g> that holds the graph
+> Write a separate update method for scatterPlotOrdinal to redraw without reapplying filters
+> Perhaps we'll need additional filters
+> Update the domain for the axis, redraw it, then filter the dots based on the new domains, use a select all to get all the dot <g>'s, then use the exit() selection to remove the unwanted ones and then reset their translation functions to the new values
+
+Useful Code Snippets:
+
+// "zooms" the xaxis in by lopping off 20 domain values from either side, doesn't redraw the datapoints
+plot.xScale.domain(plot.xScale.domain().slice(20,-20));
+plot.xAxis.scale(plot.xScale);
+plot.xAxisG.call(plot.xAxis);
+
+// Ought to realign the dots based on the new scale
+plot.dots.attr('transform', function(d) { return 'translate(' + plot.xScale(d[plot.options.x]) + ', ' + plot.yScale(d[plot.options.y]) + ')' ; });
+

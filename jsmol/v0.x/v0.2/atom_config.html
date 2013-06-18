@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<title>OpenKIM Atomic Configuration Visualization</title>
+		<meta charset="utf-8">
+		<title>OpenKIM Atomic Configuration, JSMOL</title>
+		<link rel="stylesheet" type="text/css" href="./style.css">
+		<script src="./query.js"></script>
+		<script src="./jquery-1.9.1.min.js"></script>
+
+		<script src="./d3.v3.js"></script>
+		<script src="./mustache.js"></script>
+		<script src="./filters.js"></script>
+
+		<script type="text/javascript" src="./jsmol/js/JSmoljQuery.js"></script>
+		<script type="text/javascript" src="./jsmol/js/JSmolCore.js"></script>
+		<script type="text/javascript" src="./jsmol/js/JSmolApplet.js"></script>
+		<script type="text/javascript" src="./jsmol/js/JSmolApi.js"></script>
+		<script type="text/javascript" src="./jsmol/js/j2sjmol.js"></script>
+		<script type="text/javascript" src="./jsmol/js/JSmol.js"></script>
+		<script src="./spaceToSym.js"></script>
+		<script src="./atom_config.js"></script>
+		<script src="./select2/select2.js" ></script>
+		<link href="./select2/select2.css" type="text/css" rel="stylesheet"/>
+		<script>
+		
+		var query_result_tr, query_result_rd, query_result;
+		var selected = [];
+		var cis;
+		var filters;
+
+		d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(query_rd_singlevals, function(error, json_result) {
+			if (error) return console.warn(error);
+			query_result_rd = buildDataStruct(json_result, keys_rd_singlevals, ['RD']); //Creates a map of RD vals to objects
+			
+			$('#progressbar').animate({width: '25%'}).css({background: '#0f0'});
+			d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(query_rd_multivals, function(error, json_result) {
+				if (error) return console.warn(error);
+				//console.log(json_result);
+				$('#progressbar').animate({width: '50%'});
+				addWyckoffToMap(json_result, query_result_rd, keys_rd_multivals, ['RD']);
+				//console.log(query_result_rd);
+					
+
+					
+				d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(query_tr_singlevals, function(error, json_result) {
+					if (error) return console.warn(error);
+					$('#progressbar').animate({width: '75%'});
+					query_result_tr = buildDataStruct(json_result,keys_tr_singlevals,['Model', 'Test']);
+					
+					d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(query_tr_multivals, function(error, json_result) {
+						if (error) return console.warn(error);
+						$('#progressbar').animate({width: '100%'});
+						
+						addWyckoffToMap(json_result, query_result_tr, keys_tr_multivals, ['Model', 'Test']);
+				
+						query_result = d3.map();
+						query_result_rd.forEach(function(key, val){ query_result.set(key, val);})
+						query_result_tr.forEach(function(key, val){ query_result.set(key, val);})		
+						
+						console.log(query_result);
+
+						filters = new multiFilter(query_result.values());
+						filters.addFilter('sn', 'shortname', 'shortsel', true);
+						filters.addFilter('at', 'species', 'atomsel', false);
+						filters.addFilter('sg', 'spacegroup', 'spacesel', false);
+
+						addStructs();
+						
+						$('#progressbar').animate({height: 'hide'},'fast', function(){
+							$('#progressbar_container').animate({width: 'hide'});
+						});
+						
+					});
+					
+				});
+				
+			});
+		});
+			
+		var jmolApplet0; 
+		jmol_isReady = isReady;
+
+		var Info = {
+			use : "HTML5",
+			width: 1024,
+			height: 490,
+			debug: false,
+			color: "0xFFFFFF",
+			addSelectionOptions: false,
+			serverURL: "http://localhost/kimvis/jsmol/jsmol.php",
+			use: "HTML5",
+			j2sPath: "jsmol/j2s",
+			readyFunction: jmol_isReady,
+			script: 'set antialiasDisplay; background black;',
+			deferApplet : false,
+			deferUncover : true,
+			disableJ2SLoadMonitor: false,
+			disableInitialConsole: true,
+			allowJavaScript: true,
+		//	console: "console_container" // default will be jmolApplet0_infodiv
+		}
+
+
+		</script>
+	</head>
+<body>
+<div id="blackbar">
+	<div id="navbar">
+		<img src="../images/kim.png">
+		<a href="http://openkim.org" target="_blank">Home</a>
+		<a href="../index.html">Visualization</a>
+	</div>
+</div>
+<div id="container">
+	<div id="jsmol_container"></div>
+	<div id="visinput">
+		<form>
+		<fieldset>
+		<legend>Visualization Options</legend>
+		<h4>Choose Structure:&nbsp;&nbsp;<div id="progressbar_container"><div id="progressbar"></div></div></h4>
+		<select id="structure_select" name="structure_select">
+		<option>Loading crystal structures...</option>
+		</select>&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" id="submit" value="Draw" onclick="drawAtoms()">&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" onclick="addStructs()" value="Filter">
+		<input type="button" onclick="filters.resetAll()" value="Reset Filters">
+		<hr>
+		<h4>Filters</h4>
+		<table id="filters">
+			<tr>
+			<td><div id="atom">
+				Atoms:
+				<input type="button" onclick="filterButtonClick(filters, 'at')" id="atomsel_button" value="Select">
+				<input type="button" onclick="filters.getFilter('at').selectAll()" value="Select All">
+				<input type="button" onclick="filters.getFilter('at').clearSelection()" value="Clear">
+			</div></td>
+			<td><div id="short">
+				Shortname:
+				<input type="button" onclick="filterButtonClick(filters, 'sn')" id="shortsel_button" value="Select">
+				<input type="button" onclick="filters.getFilter('sn').selectAll()" value="Select All">
+				<input type="button" onclick="filters.getFilter('sn').clearSelection()" value="Clear">
+			</div></td>
+			<td><div id="space">Spacegroup: 
+				<input type="button" onclick="filterButtonClick(filters, 'sg')" id="spacesel_button"value="Select">
+				<input type="button" onclick="filters.getFilter('sg').selectAll()" value="Select All">
+				<input type="button" onclick="filters.getFilter('sg').clearSelection()" value="Clear">
+			</div></td>
+			</tr>
+		</table>
+		<br>
+		<a href="./query.js">Download Datalog Query String</a><br>
+		<a href="https://portal.openkim.org">Example Queries</a>
+		</fieldset>
+		</form>
+	</div>
+</div>
+<script>
+
+
+Jmol.setDocument(0);
+jmolApplet0 = Jmol.getApplet("jmolApplet0", Info);
+
+$("#jsmol_container").html(Jmol.getAppletHtml(jmolApplet0)); 
+var demo = 'set antialiasDisplay; load INLINE "data_global \
+_cell_length_a 3.513  \
+_cell_length_b 3.513 \
+_cell_length_c 11.75 \
+_cell_angle_alpha 90.0 \
+_cell_angle_beta 90.0 \
+_cell_angle_gamma 90.0 \
+_symmetry_space_group_name_H-M \'P6_3&#x2F;mmc\' \
+loop_ \
+_atom_site_label \
+_atom_site_symmetry_multiplicity \
+_atom_site_Wyckoff_symbol \
+_atom_site_fract_x \
+_atom_site_fract_y \
+_atom_site_fract_z  \
+P 2 a 0.0 0.0 0.0  \
+Ti 4 f 0.3333333333333333 0.6666666666666666 0.125  \
+P 2 d 0.6666666666666666 0.3333333333333333 0.25  \
+loop_ \
+_space_group_symop_operation_xyz \
+\'x,y,z\' 	\'-y,x-y,z\' 	\'-x+y,-x,z\' 	\'-x,-y,z+1/2\' 	\'y,-x+y,z+1/2\' 	\'x-y,x,z+1/2\' 	\'y,x,-z\' 	\'x-y,-y,-z\' 	\'-x,-x+y,-z\' 	\'-y,-x,-z+1/2\' 	\'-x+y,y,-z+1/2\' 	\'x,x-y,-z+1/2\' 	\'-x,-y,-z\' 	\'y,-x+y,-z\' 	\'x-y,x,-z\' 	\'x,y,-z+1/2\' 	\'-y,x-y,-z+1/2\' 	\'-x+y,-x,-z+1/2\' 	\'-y,-x,z\' 	\'-x+y,y,z\' 	\'x,x-y,z\' 	\'y,x,z+1/2\' 	\'x-y,-y,z+1/2\' 	\'-x,-x+y,z+1/2\'" {2 2 2}';
+
+Jmol.script(jmolApplet0, demo);
+var lastPrompt=0;
+</script>
+</body>
+
+<script>
+</script>
+</html>
