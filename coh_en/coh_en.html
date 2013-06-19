@@ -26,10 +26,9 @@
 	var panning_down = false;
 	var panning = false;
 
-	// Default set
-	var atoms = ["W", "Al", "Co", "Zn", "Fe", "Nb", "Ni", "Si", "Cr", "Ta", "Pd", "Mg", "Ca", "Mn", "V", "Cu", "Cd", "Mo", "Re", "Ga", "Hg", "Ir", "Ru", "Pt", "Sc", "Ne", "Ba", "Tb", "Ag", "Au", "U", "Na", "In", "Tc", "Gd", "Ho", "Pb", "Li", "Am", "Hf", "Ac", "Os", "Rb", "Sn", "Sr", "C", "Ce", "Eu", "La", "Kr", "Ge", "Th", "Ar", "Se", "K", "Zr", "Dy", "Lu", "Yb", "Cs", "Pa", "Sm", "As", "Tm", "Bi", "Tl", "Ti", "Nd", "Be", "He", "Er", "Rh", "Te", "Y", "Xe"];
-	atoms = d3.set(atoms);
+	var model, modelset, modelFilter;
 
+	// Start time for query
 	var t1 = new Date();
 	d3.json(uri).header("Content-type", "application/x-www-form-urlencoded").post(q, function(error, json_result) {
 		if (error) return console.warn(error);
@@ -47,22 +46,32 @@
 			this.get(key).source = 'tr';
 		});
 		query_result = query_result.values();	
-
+		
 		// Create set of filters
 		filters = new multiFilter(query_result);
 		filters.addFilter('sn', 'Shortname', 'shortsel', true);
 		filters.addFilter('at', 'Atoms', 'atomsel', false);
 		filters.addFilter('sg', 'Spacegroup', 'spacesel', false);
-
-
+		modelFilter = new filter(query_result, 'Model', 'modelsel', false);
+		console.log(modelFilter);
+		model = getArgPassed('model');
+		if (model){
+			modelset = d3.set();
+			model.forEach(function(d){
+				modelset.add(d);
+			});
+			modelFilter.selection = modelset;
+		} else {
+			// Default set
+			var atoms = ["W", "Al", "Co", "Zn", "Fe", "Nb", "Ni", "Si", "Cr", "Ta", "Pd", "Mg", "Ca", "Mn", "V", "Cu", "Cd", "Mo", "Re", "Ga", "Hg", "Ir", "Ru", "Pt", "Sc", "Ne", "Ba", "Tb", "Ag", "Au", "U", "Na", "In", "Tc", "Gd", "Ho", "Pb", "Li", "Am", "Hf", "Ac", "Os", "Rb", "Sn", "Sr", "C", "Ce", "Eu", "La", "Kr", "Ge", "Th", "Ar", "Se", "K", "Zr", "Dy", "Lu", "Yb", "Cs", "Pa", "Sm", "As", "Tm", "Bi", "Tl", "Ti", "Nd", "Be", "He", "Er", "Rh", "Te", "Y", "Xe"];
+			atoms = d3.set(atoms);
+			filters.getFilter('at').selection = atoms;
+		}
 		// Plot
 		submitOptions();
 				
 	});
 
-		
-	var scales;
-	var options = {};
 	</script>
 </head>
 <body>
@@ -70,11 +79,11 @@
 		<div id="navbar">
 			<img src="../images/kim.png">
 			<a href="http://openkim.org" target="_blank">Home</a>
-			<a href="http://adam.openkim.org">Visualization</a>
+			<a href="../index.html">Visualization</a>
 		</div>
 	</div>
 	<div id="container">
-		<h1 style="position: relative; left: 230px;">OpenKIM Equilibrium Cohesive Energy Visualizer</h1>
+		<h1 style="position: relative; left: 230px;">OpenKIM Cohesive Energy Visualizer</h1>
 		<div id="kimvis">
 			<div id="loading">
 				Loading data.. <br><br>If loading takes longer than 5 sec, try refreshing.
@@ -84,14 +93,15 @@
 			<fieldset id="visInput" >
 				<legend>Tools</legend>
 				<div id="interaction">
-				<img id="zoom_box_button" title="Zoom Tool" onclick="zoomBoxDown()" src="./icons/zoom_box_up.png">
+					<img id="zoom_box_button" title="Zoom Tool" onclick="zoomBoxDown()" src="./icons/zoom_box_up.png">
 					<img id="zoom_out_button" title="Zoom Out Tool" onclick="zoomOutDown()" src="./icons/zoom_out.png">
 					<img id="panning_button" title="Panning Tool" onclick="panBoxDown()" src="./icons/pan_up.png">
 					<img id="inspect_button" title="Inspect Data Point" onclick="inspectDown()" src="./icons/inspect_up.png">
 
 					<img id="label_button" title="Label Data Points" onclick="toggleMenuOptions('label')" src="./icons/label_up.png">
-					<img id="data_button" title="Data Options" onclick="toggleMenuOptions('data')" src="./icons/data_up.png">
-					<img id="filter_button" title="Filters" onclick="toggleMenuOptions('filter')" src="./icons/filter_up.png">					
+<!-- 					<img id="data_button" title="Data Options" onclick="toggleMenuOptions('data')" src="./icons/data_up.png">
+ -->
+ 					<img id="filter_button" title="Filters" onclick="toggleMenuOptions('filter')" src="./icons/filter_up.png">					
 					<img id="help_button" title="Help Tool" onclick="helpDown()" src="./icons/help_up.png">
 				</div><!-- Interaction -->
 				<hr>
@@ -109,7 +119,7 @@
 				</div><!-- label_div -->
 				<script>	$('#label_div').animate({height: 'toggle'}); </script>
 				<hr>
-				<div id="data_div">
+								<div id="data_div">
 					<h3>Data Options</h3>
 
 					Cohesive Energy Units: <select  id="cohen-units" name="cohen-units" size=1>
@@ -124,7 +134,7 @@
 					</select>
 				<script>	$('#data_div').animate({height: 'toggle'}); </script>
 				</div><!-- data_div -->
-				<hr>
+				<hr> 
 				<div id="filter_div">
 					<h3>Filters</h3>
 					Ref. Data/ Test: <select id="rd-tr" name="rd-tr" size=1>
@@ -140,25 +150,38 @@
 					<div id="short">
 						Shortname: <br>
 						<input type="button" onclick="filterButtonClick(filters, 'sn')" id="shortsel_button" value="Select"><br>
-						<input type="button" onclick="filters.getFilter('sn').selectAll()" value="Select All">
-						<input type="button" onclick="filters.getFilter('sn').clearSelection()" value="Clear">
+						<input type="button" onclick="filterSelectAll(filters, 'sn')" value="Select All">
+						<input type="button" onclick="filterClear(filters, 'sn')" value="Clear">
 					</div>
 					<br>
 					<div id="atom">
 						Atoms: <br>
 						<input type="button" onclick="filterButtonClick(filters, 'at')" id="atomsel_button" value="Select"><br>
-						<input type="button" onclick="filters.getFilter('at').selectAll()" value="Select All">
-						<input type="button" onclick="filters.getFilter('at').clearSelection()" value="Clear">
+						<input type="button" onclick="filterSelectAll(filters, 'at')" value="Select All">
+						<input type="button" onclick="filterClear(filters, 'at')" value="Clear">
 					</div>
 					<br>
 					<div id="space">
 						Spacegroup: <br>
 						<input type="button" onclick="filterButtonClick(filters, 'sg')" id="spacesel_button"value="Select"><br>
-						<input type="button" onclick="filters.getFilter('sg').selectAll()" value="Select All">
-						<input type="button" onclick="filters.getFilter('sg').clearSelection()" value="Clear">
+						<input type="button" onclick="filterSelectAll(filters, 'sg')" value="Select All">
+						<input type="button" onclick="filterClear(filters, 'sg')" value="Clear">
 					</div>
 					<br>
-					<input type="button" onclick="filters.resetAll()" value="Reset Filters">
+					<div id="model">
+						Model: <br>
+						<input type="button" onclick="filterButtonClick(modelFilter)" id="modelsel_button"value="Select"><br>
+						<input type="button" onclick="filterSelectAll(modelFilter)" value="Select All">
+						<input type="button" onclick="filterClear(modelFilter)" value="Clear">
+					</div>
+					<br>
+					Lattice Constant:<br> <select  id="y" name="y" size=1>
+						<option value="a">a</option>
+						<option value="b">b</option>
+						<option value="c">c</option>
+					</select>
+					<br><br>
+					<input type="button" onclick="resetFilters()" value="Reset Filters">
 				</div><!-- Filters -->
 				<script>	$('#filter_div').animate({height: 'toggle'}); </script>
 				<hr>
@@ -168,9 +191,9 @@
 				<hr>
 				<h4>Dev</h4>
 				<p id="querytime">
+				</p>
 				<a href="./query.js">Download Datalog Query String</a><br>
 				<a href="https://portal.openkim.org">Example Queries</a>
-				</p>
 			</fieldset>
 		</form>
 
@@ -204,7 +227,12 @@
 			<p>	Help: Display this help box</p>
 			<input style="float: right;" type="button" onclick="helpDown()" value="Close">
 		
-		</div><script>$('#help_box').draggable();</script>
+		</div>	
+		<script>
+			// Add dragging to help box
+			$('#help_box').draggable();
+		</script>
 	</div> <!--container-->
+	<div id="queries"></div>
 </body>
 </html>

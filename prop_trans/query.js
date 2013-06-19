@@ -6,9 +6,9 @@ data.set('bulkmod', new Array());
 
 for (var i=0; i<100; i++){
 	if(i%20){
-		var source = 'rd';
+		var source = 'tr';
 	} else {
-		var source = 'tr';		
+		var source = 'rd';		
 	}
 
 	data.get('latconst').push({

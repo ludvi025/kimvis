@@ -125,6 +125,7 @@ filter.prototype.setAll = function(){
 			}
 		}
 	}
+	this.all.remove(undefined);
 	var options = this.options;
 	this.options.forEach(function(val){ options.remove(val) } );
 	this.all.forEach(function(val){ options.add(val) }); 
@@ -161,6 +162,8 @@ filter.prototype.isSelected = function(item){
 
 }
 
+/*So, if we have a model selected, we only want reference data to show up that's applicable to that model. In order to do that, we have to update the selection set based on the model??? Or is there a better way? We could update the options set, but that won't actually filter anything. We could change having nothing selected to use options, but that would cause issues with resetting. */
+/*Filter the data like normal, then filter it again by finding the intersection of the model filter with the other sets*/
 filter.prototype.isOption = function(item){
 	if (inSet(item, this.options))
 		return true;
@@ -216,7 +219,7 @@ filter.prototype.addSelectionOptions = function(){
 		allowClear: true,
 		closeOnSelect: false
 		});
-	$('#' + this.div + '_button').attr('value', 'Save');
+	$('#' + this.div + '_button').attr('value', 'Apply');
 }
 
 filter.prototype.updateSelectionBox = function(){
@@ -233,9 +236,19 @@ filter.prototype.removeSelectionBox = function(){
 	$('#' + this.div + '_button').attr('value', 'Select');
 }
 
+filter.prototype.getIntersection = function(otherFilter) {
+	var intersection = d3.set();
+	for (var i = 0; i<this.data.length; i++){
+		var datum = this.data[i];
+		if (this.isSelected(datum[this.key]) && otherFilter.isSelected(datum[otherFilter.key])){
+			intersection.add(datum[this.key]);
+		}
+	}
+	return intersection;
+}
 // == Multi Filter Object == \\
 
-function multiFilter(data){ // args == [ {filterName: <string>, filter: <filter>, data_key: <string>} ]
+function multiFilter(data){ 
 	this.filters = d3.map();
 	this.data = data;
 }
@@ -247,7 +260,7 @@ multiFilter.prototype.addFilter = function(id, key, div, dataIsArray){
 multiFilter.prototype.isSelected = function(item){
 	var keep = true;
 	this.filters.forEach(function(id,filter){
-		if (!filter.isSelected(item[filter.key])){
+		if (!filter.isSelected(item[filter.key]) && item[filter.key]!=undefined){
 			keep = false;
 		}
 	});

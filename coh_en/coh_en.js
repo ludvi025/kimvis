@@ -1,9 +1,7 @@
-
-//==== Prepare Data for Plotting ====\\
-
+// Called to update the plot
 function submitOptions(){
-	// Construct the options-object from the form and pass the data and options to the plotting function
 
+	// Construct options object using d3 to access the html form
 	options = {
 		title : '',
 		y: 'Cohesive-Energy',
@@ -20,13 +18,15 @@ function submitOptions(){
 		height: window.innerHeight-80,
 		margin: { top: 20, right: 40, bottom: 80, left: 50},
 	}
-	
-	// Reduce number of queries needed
+
+	// Create a copy of the data so multiple queries can be avoided, need to do a deep copy to avoid copying references
 	var data = deepCopy(query_result);
 
+	// Filtering info in form
 	var rdtr = d3.select('#rd-tr').property('value');
+	var range = [ Number(d3.select('#y_min').property('value')), Number(d3.select('#y_max').property('value')) ];
 
-	// Filter data based on ranges specified by user in options
+	// Filter the data 
 	data = data.filter(function(d){
 		var keep = true;
 
@@ -48,6 +48,35 @@ function submitOptions(){
 		return keep;
 	});
 
+	// Keep reference data only for models
+	if (modelFilter.selection.values().length != 0){
+		var tempAt = d3.set();
+		filters.getFilter('at').selection.forEach(function(e){
+			tempAt.add(e);
+		});
+		var tempSg = d3.set();
+		filters.getFilter('sg').selection.forEach(function(e){
+			tempSg.add(e);
+		});
+		var tempSn = d3.set();
+		filters.getFilter('sn').selection.forEach(function(e){
+			tempSn.add(e);
+		});
+		filters.getFilter('at').selection = filters.getFilter('at').getIntersection(modelFilter);
+		filters.getFilter('sg').selection = filters.getFilter('sg').getIntersection(modelFilter);
+		filters.getFilter('sn').selection = filters.getFilter('sn').getIntersection(modelFilter);
+		data = data.filter(function(d){
+			return filters.isSelected(d);
+		})
+		filters.getFilter('at').options = filters.getFilter('at').selection;
+		filters.getFilter('sg').options = filters.getFilter('sg').selection;
+		filters.getFilter('sn').options = filters.getFilter('sn').selection;
+		filters.getFilter('at').selection = tempAt;
+		filters.getFilter('sg').selection = tempSg;
+		filters.getFilter('sn').selection = tempSn;	
+	}
+
+
 	// If the plot already exists, update it, otherwise create it
 	if (plot){
 		plot.update(data, options);
@@ -64,7 +93,7 @@ function submitOptions(){
 			.on('mousemove', mouseMove);
 		addInteraction();	
 	}
-};
+}
 
 //==== Interaction ====\\
 
@@ -164,9 +193,11 @@ function toggleMenuOptions(name){
 
 function resetFilters(){
 	filters.resetAll();
+	modelFilter.reset();
 	d3.select('#y_min').property('value', '');
 	d3.select('#y_max').property('value', '');
 	d3.select('#rd-tr').property('value', 'b');
+	submitOptions();
 }
 
 function resetDown(){
@@ -174,9 +205,7 @@ function resetDown(){
 	d3.select('#labels').property('value', '');
 
 	resetFilters();
-	
-    d3.select('#temp-units').property('value', 'K');
-	d3.select('#latconst-units').property('value', 'A');
+	modelFilter.reset();
 
 	plot = undefined;
 
@@ -414,8 +443,8 @@ function radialView(d){
 // -- Filters -- \\
 
 function filterButtonClick(filter, multi_id){
-	var box = d3.select('#' + filter.getFilter(multi_id).div + '_div');
 	if (multi_id){
+	var box = d3.select('#' + filter.getFilter(multi_id).div + '_div');	
 		if (box.empty()){
 			filter.getFilter(multi_id).addSelectionOptions();
 
@@ -423,16 +452,54 @@ function filterButtonClick(filter, multi_id){
 			filter.updateSelections();
 			filter.updateOptions();
 			filter.getFilter(multi_id).removeSelectionBox();
+			submitOptions();
 		} 
 	} else {
+		var box = d3.select('#' + filter.div + '_div');
 		if (box.empty()){
-			filter.addSelectionOptions(container);
+			filter.addSelectionOptions();
 		} else {
 			filter.updateSelection();
+			filter.removeSelectionBox();	
+			filters.updateOptions();		
+			submitOptions();
 		}
 	}
 }
 
+function filterSelectAll(filter, multi_id){
+	if(multi_id){
+		filter.getFilter(multi_id).selectAll();
+		var box = d3.select('#' + filter.getFilter(multi_id).div + '_div');
+		if(box.empty()){
+			filter.updateSelections();
+			filter.updateOptions();
+			submitOptions();
+		}
+	} else {
+		filter.selectAll();
+		filters.updateSelections(); // Bad!!! Filters isn't guaranteed to exist!
+		filters.updateOptions();
+		submitOptions();
+	}
+	
+}
+function filterClear(filter, multi_id){
+	if(multi_id){
+		filter.getFilter(multi_id).clearSelection();
+		var box = d3.select('#' + filter.getFilter(multi_id).div + '_div');
+		if(box.empty()){
+			filter.updateSelections();
+			filter.updateOptions();
+			submitOptions();
+		}
+	} else {
+		filter.clearSelection();
+		filters.updateSelections(); // Bad!!! Filters isn't guaranteed to exist!
+		filters.updateOptions();
+		submitOptions();
+	}
+}
 
 
 // == Datastructure == \\
@@ -500,4 +567,21 @@ function deepCopy(old){
 		var newthing = jQuery.extend(true, {}, old);
 	}
 	return newthing;
+}
+
+// Load data passed through get
+function getArgPassed(variable) {
+    var query = window.location.search.substring(1);
+    console.log(query);
+    var vars = query.split('&');
+    console.log(vars);
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        console.log(pair);
+        if (pair[0] == variable) {
+        	console.log(pair[1].split(','));
+            return pair[1].split(',');
+        }
+    }
+    return false;
 }

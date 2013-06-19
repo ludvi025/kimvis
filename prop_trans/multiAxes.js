@@ -81,9 +81,7 @@ function scatterPlotMultiAxes(data, options){
 		    .orient('left');
 		yAxes.set(property, temp);
 	});
-}
 
-scatterPlotMultiAxes.prototype.draw = function() {
 	// Clear the old canvas
 	if(this.canvas) this.canvas.remove();	
 
@@ -151,9 +149,12 @@ scatterPlotMultiAxes.prototype.draw = function() {
 	var yAxisGs = this.yAxisGs;
 	var canvas = this.canvas;
 	var optins = this.options;
+	var xScale = this.xScale;
+	var yScales = this.yScales;
 	this.yAxes.forEach(function(property, axis){
 		var temp = canvas.append('g')       
-		    .attr('class', 'y axis')    	
+		    .attr('class', 'y axis')   
+		    .attr('transform', 'translate(' + Number(xScale(property)-25) + ',0)') 	
 		    .call(axis);  
 		temp.append('text')  
 		    .attr('class', 'label')
@@ -166,20 +167,41 @@ scatterPlotMultiAxes.prototype.draw = function() {
 	});
 
 	// Create SVG groups for each data point
-	var xScale = this.xScale;
-	var yScales = this.yScales;
-	this.dots = this.canvas.selectAll('.dot')
-	    .data(data.entries())
-	  .enter().append('g')
-	    .attr('class', 'dot')
-	    .attr('transform', function(d,i){ return 'translate(' + xScale(d.key) + ',' + yScales.get(key)(d.value.y) + ')';})
-		.attr('x', function(d){ return xScale(d.key); })
-		.attr('y', function(d){ return yScales.get(key)(d.value.y); });
+	this.dots = d3.map();
+	
+	var data = this.data.entries();
+
+	console.log('here2');
+
+	for (var i = 0; i<data.length; i++){
+		var key = data[i].key;
+		var temp = this.canvas.selectAll('.dot' + key)
+	    	.data(data[i].value)
+	  		.enter().append('g')
+		    .attr('class', 'dot') // + ' .data[i].key'
+		    .attr('transform', function(d,i){ return 'translate(' + xScale(key) + ',' + yScales.get(key)(d.y) + ')';})
+			.attr('x', function(d){ return xScale(key); })
+			.attr('y', function(d){ return yScales.get(key)(d.y); });
+		this.dots.set(key, temp);
+	}
+
+
 
 	// Actual points
-	this.dots.append('circle')
-	    .attr('r', 4)
-		.attr('class', function(d){ return d.value.source; });
+	this.dots.forEach(function(property, dots){
+		dots.append('circle')
+		.attr('fill', function(d){
+			if (d.source == 'rd'){
+				return '#09f';
+			} else if (d.source == 'tr') {
+				return '#f66';
+			} else {
+				return '#000';
+			}
+		})
+	    .attr('r', 4);
+		//.attr('class', function(d){ return d.value.source; });
+	});
 
 		
 }
